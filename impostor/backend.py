@@ -1,22 +1,24 @@
+# -*- coding: utf-8 -*-
+
 import inspect
 
-import django.contrib.auth as auth
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.http import HttpRequest
-from models import ImpostorLog
 
 from django.conf import settings
+from .models import ImpostorLog
+
 
 try:
 	IMPOSTOR_GROUP = Group.objects.get(name=settings.IMPOSTOR_GROUP)
-except:
+except (Group.DoesNotExist, AttributeError):
 	IMPOSTOR_GROUP = None
 
 def find_request():
-	'''
+	"""
 	Inspect running environment for request object. There should be one,
 	but don't rely on it.
-	'''
+	"""
 	frame = inspect.currentframe()
 	request = None
 	f = frame
@@ -42,12 +44,12 @@ class AuthBackend:
 			admin, uuser = [ uname.strip() for uname in username.split(" as ") ]
 
 			# Check if admin exists and authenticates
-			admin_obj = User.objects.get(username=admin)
+			admin_obj = settings.AUTH_USER_MODEL.objects.get(username=admin)
 			if (admin_obj.is_superuser or (IMPOSTOR_GROUP and IMPOSTOR_GROUP in admin_obj.groups.all())) and admin_obj.check_password(password):
 				try:
-					auth_user = User.objects.get(username=uuser)
-				except User.DoesNotExist:
-					auth_user = User.objects.get(email=uuser)
+					auth_user = settings.AUTH_USER_MODEL.objects.get(username=uuser)
+				except settings.AUTH_USER_MODEL.DoesNotExist:
+					auth_user = settings.AUTH_USER_MODEL.objects.get(email=uuser)
 
 			if auth_user:
 				# Superusers can only be impersonated by other superusers
@@ -76,6 +78,7 @@ class AuthBackend:
 
 	def get_user(self, user_id):
 		try:
-			return User.objects.get(pk=user_id)
-		except User.DoesNotExist:
+			return settings.AUTH_USER_MODEL.objects.get(pk=user_id)
+		except settings.AUTH_USER_MODEL.DoesNotExist:
 			return None
+

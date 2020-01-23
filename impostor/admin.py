@@ -1,6 +1,8 @@
-from models import ImpostorLog
+# -*- coding: utf-8 -*-
+
 from django.contrib import admin
 from django.shortcuts import render_to_response
+from .models import ImpostorLog
 
 
 class ImpostorAdmin(admin.ModelAdmin):
@@ -30,3 +32,4 @@ class ImpostorAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ImpostorLog, ImpostorAdmin)
+
