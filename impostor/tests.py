@@ -15,16 +15,12 @@ user_pass = 'user_pass'
 class TestImpostorLogin(TestCase):
 
     def setUp(self):
-        real_admin = User.objects.create(
-            username=admin_username, password=admin_pass)
+        real_admin = User.objects.create(username=admin_username, password=admin_pass)
         real_admin.is_superuser = True
         real_admin.set_password(admin_pass)
         real_admin.save()
 
-        real_user = User.objects.create(
-            username=user_username,
-            email=user_email,
-            password=user_pass)
+        real_user = User.objects.create(username=user_username, email=user_email, password=user_pass)
         real_user.set_password(user_pass)
         real_user.save()
 
@@ -50,11 +46,7 @@ class TestImpostorLogin(TestCase):
         no_logs_entries = len(ImpostorLog.objects.all())
         self.failUnlessEqual(no_logs_entries, 0)
 
-        u = authenticate(
-            username="%s as %s" %
-            (admin_username,
-             user_username),
-            password=admin_pass)
+        u = authenticate(username="%s as %s" % (admin_username, user_username), password=admin_pass)
         real_user = User.objects.get(username=user_username)
 
         self.failUnlessEqual(u, real_user)
@@ -68,8 +60,7 @@ class TestImpostorLogin(TestCase):
         lin = entry.logged_in
         self.failUnlessEqual(entry.impostor.username, admin_username)
         self.failUnlessEqual(entry.imposted_as.username, user_username)
-        self.assertTrue(lin.year == today.year and lin.month ==
-                        today.month and lin.day == today.day)
+        self.assertTrue(lin.year == today.year and lin.month == today.month and lin.day == today.day)
         self.assertTrue(entry.token and entry.token.strip() != "")
 
     def test_form(self):
@@ -90,3 +81,4 @@ class TestImpostorLogin(TestCase):
         del initial['password']
         form = BigAuthenticationForm(data=initial)
         self.assertFalse(form.is_valid())
+

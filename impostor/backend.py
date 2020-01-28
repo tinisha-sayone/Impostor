@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group
 from django.http import HttpRequest
 from django.contrib.auth import get_user_model
 
-from models import ImpostorLog
+from .models import ImpostorLog
 
 from django.conf import settings
 
@@ -27,8 +27,7 @@ def find_request():
     f = frame
 
     while not request and f:
-        if 'request' in f.f_locals and isinstance(
-                f.f_locals['request'], HttpRequest):
+        if 'request' in f.f_locals and isinstance(f.f_locals['request'], HttpRequest):
             request = f.f_locals['request']
         f = f.f_back
 
@@ -48,20 +47,19 @@ class AuthBackend:
             admin, uuser = [uname.strip() for uname in username.split(" as ")]
 
             # Check if admin exists and authenticates
-            get_query_with = {User.USERNAME_FIELD: admin}
-            admin_obj = User.objects.get(**get_query_with)
-            if (admin_obj.is_superuser or (IMPOSTOR_GROUP and IMPOSTOR_GROUP in admin_obj.groups.all(
-            ))) and admin_obj.check_password(password):
-
-                get_query_with = {User.USERNAME_FIELD: uuser}
-                auth_user = User.objects.get(**get_query_with)
+            admin_obj = User.objects.get(username=admin)
+            if (admin_obj.is_superuser or (IMPOSTOR_GROUP and IMPOSTOR_GROUP in admin_obj.groups.all())) \
+                    and admin_obj.check_password(password):
+                try:
+                    auth_user = User.objects.get(username=uuser)
+                except User.DoesNotExist:
+                    auth_user = User.objects.get(email=uuser)
 
             if auth_user:
                 # Superusers can only be impersonated by other superusers
                 if auth_user.is_superuser and not admin_obj.is_superuser:
                     auth_user = None
-                    raise Exception(
-                        "Superuser can only be impersonated by a superuser.")
+                    raise Exception("Superuser can only be impersonated by a superuser.")
 
                 # Try to find request object and maybe be lucky enough to find
                 # IP address there
@@ -77,8 +75,7 @@ class AuthBackend:
                     # take only the first one, which is the client's address
                     if ',' in ip_addr:
                         ip_addr = ip_addr.split(',', 1)[0].strip()
-                log_entry = ImpostorLog.objects.create(
-                    impostor=admin_obj, imposted_as=auth_user, impostor_ip=ip_addr)
+                log_entry = ImpostorLog.objects.create(impostor=admin_obj, imposted_as=auth_user, impostor_ip=ip_addr)
 
                 if log_entry.token and request:
                     request.session['impostor_token'] = log_entry.token
@@ -92,3 +89,4 @@ class AuthBackend:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
+
