@@ -19,4 +19,3 @@ class ImpostorLog(models.Model):
         if not self.token and self.impostor:
             self.token = hashlib.sha1(self.impostor.username + str(time.time())).hexdigest()[:32]
         super(ImpostorLog, self).save(*args, **kwargs)
-

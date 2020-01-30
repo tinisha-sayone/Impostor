@@ -81,4 +81,3 @@ class TestImpostorLogin(TestCase):
         del initial['password']
         form = BigAuthenticationForm(data=initial)
         self.assertFalse(form.is_valid())
-

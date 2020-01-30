@@ -29,4 +29,3 @@ class ImpostorAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ImpostorLog, ImpostorAdmin)
-
