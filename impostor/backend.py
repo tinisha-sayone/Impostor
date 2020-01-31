@@ -8,7 +8,7 @@ from django.http import HttpRequest
 from django.contrib.auth import get_user_model
 from django.conf import settings
 
-from .models import ImpostorLog
+from impostor.models import ImpostorLog
 
 from apps.retailers.models import Retailer
 from etailpet.utils.helpers import get_profile_from_user
