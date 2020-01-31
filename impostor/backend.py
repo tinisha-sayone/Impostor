@@ -51,12 +51,19 @@ class AuthBackend:
             # Admin logging as user?
             admin, uuser = [uname.strip() for uname in username.split(" as ")]
             # Check if admin exists and authenticates
-            admin_obj = User.objects.get(email=admin)
-            if (get_profile_from_user(admin_obj) == USER_RETAILER or
-                (IMPOSTOR_GROUP and IMPOSTOR_GROUP in admin_obj.groups.all())) \
-                    and admin_obj.check_password(password):
-                if get_profile_from_user(User.objects.get(email=uuser)) == USER_CUSTOMER:
-                    auth_user = User.objects.get(email=uuser)
+            try:
+                admin_obj = User.objects.get(email=admin)
+                auth_user = User.objects.get(email=uuser)
+            except User.DoesNotExist:
+                admin_obj = User.objects.get(username=admin)
+                auth_user = User.objects.get(username=uuser)
+
+            except User.MultipleObjectsReturned:
+                logger.warning(
+                    'Multiple users with identical email address and password'
+                    'were found. Marking all but one as not active.')
+            if (((get_profile_from_user(admin_obj) == USER_RETAILER) and (get_profile_from_user(auth_user) == USER_CUSTOMER))
+                    or (IMPOSTOR_GROUP and IMPOSTOR_GROUP in admin_obj.groups.all()) and admin_obj.check_password(password)):
 
                 if auth_user:
                     # Try to find request object and maybe be lucky enough to find
